@@ -15,7 +15,7 @@ const Home = () => {
 	};
 
 	const { data, isLoading, isError, fetchNextPage, hasNextPage } = useInfiniteQuery({
-		queryKey: ["movies", searchTerm], // Include searchTerm in query key
+		queryKey: ["movies"],
 		queryFn: fetchMovies,
 		getNextPageParam: (lastPage) => {
 			if (lastPage.page < lastPage.total_pages) {
@@ -27,7 +27,7 @@ const Home = () => {
 		initialPageParam: 1,
 	});
 
-	// debouncing
+	// Debouncing
 	const debouncedQUpdate = useMemo(() => {
 		return debounce((value: string) => {
 			setSearchTerm(value);
@@ -50,6 +50,11 @@ const Home = () => {
 		return <h1>Error while fetching data</h1>;
 	}
 
+	// Filter movies based on the search term
+	const filteredMovies = data.pages
+		.flatMap((page) => page.results)
+		.filter((movie: IMoviesData) => movie.title.toLowerCase().includes(searchTerm.toLowerCase()));
+
 	return (
 		<div>
 			<div className="sticky top-0 z-50 p-4 bg-white shadow-md">
@@ -61,25 +66,23 @@ const Home = () => {
 				/>
 			</div>
 			<InfiniteScroll
-				dataLength={data.pages.flatMap((page) => page.results).length}
+				dataLength={filteredMovies.length}
 				next={fetchNextPage}
 				hasMore={hasNextPage}
 				loader={<h4>Loading...</h4>}
 				endMessage={<p>No more movies to load</p>}
 			>
 				<div className="grid xm:grid-cols-1 sm:grid-cols-2 xs:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-					{data.pages.flatMap((page) =>
-						page.results.map((movie: IMoviesData) => (
-							<MovieCard
-								key={movie.id}
-								id={movie.id}
-								overview={movie.overview}
-								poster_path={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-								title={movie.title}
-								vote_average={movie.vote_average}
-							/>
-						))
-					)}
+					{filteredMovies.map((movie: IMoviesData) => (
+						<MovieCard
+							key={movie.id}
+							id={movie.id}
+							overview={movie.overview}
+							poster_path={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+							title={movie.title}
+							vote_average={movie.vote_average}
+						/>
+					))}
 				</div>
 			</InfiniteScroll>
 		</div>
